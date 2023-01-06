@@ -13,7 +13,7 @@ MODES = ["normalize-tracknumber", "rename", "normalize-year", "set-genre", "clea
 
 MODE = ""
 QUIET = False
-PATH = ""
+PATH = []
 RUN = False
 GENRE = ""
 
@@ -24,7 +24,8 @@ TRACKS = []
 
 def load_files():
     global FILES
-    FILES = find_files(PATH)
+    for p in PATH:
+        FILES.extend(find_files(p))
 
 
 def find_files(root: str) -> list[str]:
@@ -55,11 +56,11 @@ def parse():
     global GENRE
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("path")
+    parser.add_argument("--path", action="extend", required=True, nargs="+")
+    parser.add_argument("-m", "--mode", choices=MODES, required=True)
+    parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--run", action="store_true")
-    parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--genre")
-    parser.add_argument("--mode", choices=MODES, required=True)
 
     args = parser.parse_args()
     PATH = args.path
@@ -73,7 +74,7 @@ def normalize_tracknumber():
     for track, path in TRACKS:
         filename = path.split("/")[-1]
         old_number = track.raw["tracknumber"]
-        new_number = track["tracknumber"]
+        new_number = int(track["tracknumber"])
 
         if not QUIET:
             print(f'{filename}\n{old_number} -> {new_number}\n')
@@ -145,6 +146,7 @@ if __name__ == "__main__":
     parse()
     load_files()
     load_tags()
+    
     if MODE == "normalize-tracknumber":
         normalize_tracknumber()
     elif MODE == "rename":
