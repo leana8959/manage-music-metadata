@@ -1,11 +1,15 @@
 from sys import argv, exit
 from os.path import join, isdir, isfile
 from os import path, listdir
+import os
 import argparse
 import music_tag
+import re
 
 
 FILE_EXT = ["m4a", "flac"]
+MODES = ["normalize-tracknumber", "rename"]
+
 MODE = ""
 QUIET = False
 PATH = ""
@@ -49,7 +53,7 @@ def parse():
     parser.add_argument("path")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--mode", choices=["normalize-tracknumber"], required=True)
+    parser.add_argument("--mode", choices=MODES, required=True)
 
     args = parser.parse_args()
     PATH = args.path
@@ -67,6 +71,25 @@ def normalize_tracknumber():
         if RUN:
             track.save()
 
+def rename():
+    global TRACKS
+    new_tracks = []
+    for track, path in TRACKS:
+        root, old_name = os.path.split(path)
+        _, extension = old_name.split('.')
+
+        tracknumber = int(track["tracknumber"])
+        title = track["title"]
+        new_name = f"{tracknumber:02} - {title}.{extension}"
+    
+        old_path = join(root, old_name)
+        new_path = join(root, new_name)
+
+        if not QUIET:
+            print(f"{old_name} ->\n{new_name}\n")
+        
+        if RUN and old_path != new_path:
+            os.rename(old_path, new_path)
 
 
 if __name__ == "__main__":
@@ -75,6 +98,8 @@ if __name__ == "__main__":
     load_tags()
     if MODE == "normalize-tracknumber":
         normalize_tracknumber()
+    elif MODE == "rename":
+        rename()
     
 
 
