@@ -9,9 +9,9 @@ import re
 
 
 FILE_EXT = ["m4a", "flac"]
-TRASH_EXT = ["log", "m3u"]
+TRASH_EXT = ["log", "m3u", "jpeg", "jpg", "png"]
 MODES = ["normalize-tracknumber", "rename",
-         "normalize-year", "set-genre", "clear-comment", "remove-junk"]
+         "normalize-year", "set-genre", "clear-comment", "remove-junk", "clear-lyrics"]
 
 MODE = ""
 QUIET = False
@@ -164,6 +164,16 @@ def clear_comment():
             track["comment"] = ""
             track.save()
 
+def clear_lyrics():
+    for track, path in TRACKS:
+        if not QUIET:
+            filename = path.split('/')[-1]
+            lyrics = track["lyrics"]
+            print(f"{filename}\n{lyrics or 'Empty'} -> \"\"\n")
+        if RUN and lyrics != "":
+            track["lyrics"] = ""
+            track.save()
+
 
 def remove_junk():
     for trash in TRASHES:
@@ -190,3 +200,5 @@ if __name__ == "__main__":
         clear_comment()
     elif MODE == "remove-junk":
         remove_junk()
+    elif MODE == "clear-lyrics":
+        clear_lyrics()
