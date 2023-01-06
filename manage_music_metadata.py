@@ -8,7 +8,7 @@ import re
 
 
 FILE_EXT = ["m4a", "flac"]
-MODES = ["normalize-tracknumber", "rename"]
+MODES = ["normalize-tracknumber", "rename", "normalize-year"]
 
 MODE = ""
 QUIET = False
@@ -47,7 +47,7 @@ def parse():
     global PATH
     global RUN
     global QUIET
-    global MODE 
+    global MODE
 
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
@@ -62,18 +62,33 @@ def parse():
     MODE = args.mode
 
 
-
 def normalize_tracknumber():
     for track, path in TRACKS:
+        filename = path.split("/")[-1]
+        old_number = track.raw["tracknumber"]
+        new_number = track["tracknumber"]
+
         if not QUIET:
-            print(f'{path.split("/")[-1]}\n{track.raw["tracknumber"]} -> {track["tracknumber"]}\n')
-        track["tracknumber"] = track["tracknumber"]
-        if RUN:
+            print(f'{filename}\n{old_number} -> {new_number}\n')
+        if RUN and old_number != new_number:
+            track["tracknumber"] = new_number
             track.save()
 
+
+def normalize_year():
+    for track, path in TRACKS:
+        filename = path.split("/")[-1]
+        old_year = track.raw["year"]
+        new_year = re.findall(r"\d{4}", str(track["year"]))
+
+        if not QUIET:
+            print(f'{filename}\n{old_year} -> {new_year}\n')
+        if RUN and old_year != new_year:
+            track["year"] = new_year
+            track.save()
+
+
 def rename():
-    global TRACKS
-    new_tracks = []
     for track, path in TRACKS:
         root, old_name = os.path.split(path)
         _, extension = old_name.split('.')
@@ -81,13 +96,13 @@ def rename():
         tracknumber = int(track["tracknumber"])
         title = track["title"]
         new_name = f"{tracknumber:02} - {title}.{extension}"
-    
+
         old_path = join(root, old_name)
         new_path = join(root, new_name)
 
         if not QUIET:
             print(f"{old_name} ->\n{new_name}\n")
-        
+
         if RUN and old_path != new_path:
             os.rename(old_path, new_path)
 
@@ -100,7 +115,5 @@ if __name__ == "__main__":
         normalize_tracknumber()
     elif MODE == "rename":
         rename()
-    
-
-
-
+    elif MODE == "normalize-year":
+        normalize_year()
