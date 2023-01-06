@@ -1,5 +1,4 @@
-
-from sys import argv
+from sys import argv, exit
 from os.path import join, isdir, isfile
 from os import path, listdir
 import argparse
@@ -7,6 +6,7 @@ import music_tag
 
 
 FILE_EXT = ["m4a", "flac"]
+MODE = ""
 QUIET = False
 PATH = ""
 RUN = False
@@ -42,18 +42,27 @@ def load_tags():
 def parse():
     global PATH
     global RUN
+    global QUIET
+    global MODE 
+
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--mode", choices=["normalize-tracknumber"], required=True)
+
     args = parser.parse_args()
     PATH = args.path
     RUN = args.run
+    QUIET = args.quiet
+    MODE = args.mode
+
+
 
 def normalize_tracknumber():
     for track, path in TRACKS:
         if not QUIET:
-            print(f'{track.raw["tracknumber"]} -> {track["tracknumber"]}')
+            print(f'{path.split("/")[-1]}\n{track.raw["tracknumber"]} -> {track["tracknumber"]}\n')
         track["tracknumber"] = track["tracknumber"]
         if RUN:
             track.save()
@@ -64,4 +73,9 @@ if __name__ == "__main__":
     parse()
     load_files()
     load_tags()
-    normalize_tracknumber()
+    if MODE == "normalize-tracknumber":
+        normalize_tracknumber()
+    
+
+
+
