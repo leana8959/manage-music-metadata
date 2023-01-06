@@ -122,14 +122,14 @@ def set_genre():
 def rename():
     for track, path in TRACKS:
         root, old_name = os.path.split(path)
-        _, extension = old_name.split('.')
+        extension = old_name.split('.')[-1]
 
         try:
-            tracknumber = f'{int(track["tracknumber"])}'
+            tracknumber = f'{int(track["tracknumber"]):02}'
         except ValueError:
             tracknumber = track.raw["tracknumber"]
         title = track["title"]
-        new_name = f"{tracknumber} - {title}.{extension}"
+        new_name = f"{tracknumber} - {title}.{extension}".replace('/', ' ')
 
         old_path = join(root, old_name)
         new_path = join(root, new_name)
