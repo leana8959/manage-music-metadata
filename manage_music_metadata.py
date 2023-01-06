@@ -9,7 +9,8 @@ import re
 
 
 FILE_EXT = ["m4a", "flac"]
-MODES = ["normalize-tracknumber", "rename", "normalize-year", "set-genre", "clear-comment"]
+MODES = ["normalize-tracknumber", "rename",
+         "normalize-year", "set-genre", "clear-comment"]
 
 MODE = ""
 QUIET = False
@@ -74,7 +75,12 @@ def normalize_tracknumber():
     for track, path in TRACKS:
         filename = path.split("/")[-1]
         old_number = track.raw["tracknumber"]
-        new_number = int(track["tracknumber"])
+        try:
+            new_number = int(track["tracknumber"])
+        except ValueError:
+            print(f"{filename}\nCouldn't parse track number, skipping\n")
+            new_number = old_number
+            continue
 
         if not QUIET:
             print(f'{filename}\n{old_number} -> {new_number}\n')
@@ -118,9 +124,12 @@ def rename():
         root, old_name = os.path.split(path)
         _, extension = old_name.split('.')
 
-        tracknumber = int(track["tracknumber"])
+        try:
+            tracknumber = f'{int(track["tracknumber"])}'
+        except ValueError:
+            tracknumber = track.raw["tracknumber"]
         title = track["title"]
-        new_name = f"{tracknumber:02} - {title}.{extension}"
+        new_name = f"{tracknumber} - {title}.{extension}"
 
         old_path = join(root, old_name)
         new_path = join(root, new_name)
@@ -130,6 +139,7 @@ def rename():
 
         if RUN and old_path != new_path:
             os.rename(old_path, new_path)
+
 
 def clear_comment():
     for track, path in TRACKS:
@@ -146,7 +156,7 @@ if __name__ == "__main__":
     parse()
     load_files()
     load_tags()
-    
+
     if MODE == "normalize-tracknumber":
         normalize_tracknumber()
     elif MODE == "rename":
