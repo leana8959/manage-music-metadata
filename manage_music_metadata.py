@@ -106,12 +106,12 @@ def normalize_year():
     for track, path in TRACKS:
         filename = path.split("/")[-1]
         old_year = track.raw["year"]
-        new_year = re.findall(r"\d{4}", str(track["year"]))
+        new_year = re.findall(r"\d{4}|$", str(track.raw["year"]))[0]
 
         if not QUIET:
             print(f'{filename}\n{old_year} -> {new_year}\n')
         if RUN and old_year != new_year:
-            track["year"] = new_year
+            track.raw["year"] = new_year
             track.save()
 
 
