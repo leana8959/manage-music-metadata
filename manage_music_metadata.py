@@ -4,16 +4,20 @@ from os import path, listdir
 import os
 import argparse
 import music_tag
+import sys
 import re
 
 
 FILE_EXT = ["m4a", "flac"]
-MODES = ["normalize-tracknumber", "rename", "normalize-year"]
+MODES = ["normalize-tracknumber", "rename", "normalize-year", "set-genre"]
 
 MODE = ""
 QUIET = False
 PATH = ""
 RUN = False
+GENRE = ""
+
+
 FILES = []
 TRACKS = []
 
@@ -48,11 +52,13 @@ def parse():
     global RUN
     global QUIET
     global MODE
+    global GENRE
 
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
     parser.add_argument("--run", action="store_true")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--genre")
     parser.add_argument("--mode", choices=MODES, required=True)
 
     args = parser.parse_args()
@@ -60,6 +66,7 @@ def parse():
     RUN = args.run
     QUIET = args.quiet
     MODE = args.mode
+    GENRE = args.genre
 
 
 def normalize_tracknumber():
@@ -85,6 +92,22 @@ def normalize_year():
             print(f'{filename}\n{old_year} -> {new_year}\n')
         if RUN and old_year != new_year:
             track["year"] = new_year
+            track.save()
+
+
+def set_genre():
+    global GENRE
+    if not GENRE:
+        print("You must provide genre")
+        sys.exit(1)
+
+    for track, path in TRACKS:
+        if not QUIET:
+            filename = path.split('/')[-1]
+            old_genre = track["genre"]
+            print(f"{filename}\n{old_genre} -> {GENRE}\n")
+        if RUN and old_genre != GENRE:
+            track["genre"] = GENRE
             track.save()
 
 
@@ -117,3 +140,5 @@ if __name__ == "__main__":
         rename()
     elif MODE == "normalize-year":
         normalize_year()
+    elif MODE == "set-genre":
+        set_genre()
