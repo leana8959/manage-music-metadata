@@ -9,8 +9,9 @@ import re
 
 
 FILE_EXT = ["m4a", "flac"]
+TRASH_EXT = ["log", "m3u"]
 MODES = ["normalize-tracknumber", "rename",
-         "normalize-year", "set-genre", "clear-comment"]
+         "normalize-year", "set-genre", "clear-comment", "remove-junk"]
 
 MODE = ""
 QUIET = False
@@ -20,25 +21,37 @@ GENRE = ""
 
 
 FILES = []
+TRASHES = []
 TRACKS = []
 
 
 def load_files():
     global FILES
+    global TRASHES
+
     for p in PATH:
-        FILES.extend(find_files(p))
+        files, trashes = find_files(p)
+        FILES.extend(files)
+        TRASHES.extend(trashes)
 
 
 def find_files(root: str) -> list[str]:
     files = []
+    trashes = []
     for entry_name in listdir(root):
         entry_path = join(root, entry_name)
         extension = entry_name.split('.')[-1]
+
         if isfile(entry_path) and extension.lower() in FILE_EXT:
             files.append(entry_path)
+        elif isfile(entry_path) and extension.lower() in TRASH_EXT:
+            trashes.append(entry_path)
         elif isdir(entry_path):
-            files.extend(find_files(entry_path))
-    return files
+            f, t = find_files(entry_path)
+            files.extend(f)
+            trashes.extend(t)
+
+    return (files, trashes)
 
 
 def load_tags():
@@ -152,6 +165,14 @@ def clear_comment():
             track.save()
 
 
+def remove_junk():
+    for trash in TRASHES:
+        if not QUIET:
+            print(trash)
+        if RUN:
+            os.remove(trash)
+
+
 if __name__ == "__main__":
     parse()
     load_files()
@@ -167,3 +188,5 @@ if __name__ == "__main__":
         set_genre()
     elif MODE == "clear-comment":
         clear_comment()
+    elif MODE == "remove-junk":
+        remove_junk()
