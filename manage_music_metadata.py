@@ -9,7 +9,7 @@ import re
 
 
 FILE_EXT = ["m4a", "flac"]
-MODES = ["normalize-tracknumber", "rename", "normalize-year", "set-genre"]
+MODES = ["normalize-tracknumber", "rename", "normalize-year", "set-genre", "clear-comment"]
 
 MODE = ""
 QUIET = False
@@ -96,6 +96,7 @@ def normalize_year():
 
 
 def set_genre():
+    # FIXME use library to handle empty genre
     global GENRE
     if not GENRE:
         print("You must provide genre")
@@ -129,6 +130,16 @@ def rename():
         if RUN and old_path != new_path:
             os.rename(old_path, new_path)
 
+def clear_comment():
+    for track, path in TRACKS:
+        if not QUIET:
+            filename = path.split('/')[-1]
+            comment = track["comment"]
+            print(f"{filename}\n{comment or 'Empty'} -> \"\"\n")
+        if RUN and comment != "":
+            track["comment"] = ""
+            track.save()
+
 
 if __name__ == "__main__":
     parse()
@@ -142,3 +153,5 @@ if __name__ == "__main__":
         normalize_year()
     elif MODE == "set-genre":
         set_genre()
+    elif MODE == "clear-comment":
+        clear_comment()
